@@ -22,8 +22,17 @@ def status_led():
 
 #----------------------------[once_a_hour]
 def once_a_hour():
+    #read
     values = sensors.read()
 
+    # format
+    for i in range(len(values)):
+        try:
+            values[i] = "{:3.0f}".format(float(values[i]))
+        except Exception:
+            pass
+
+    # log
     log.info("main", "once_a_hour")
 
     logline = ""
@@ -40,9 +49,10 @@ def main():
     GPIO.init()
     sensors.start()
     webserver.start()
-    schedule.every().minute.do(once_a_hour)
+    schedule.every().hour.at(':00').do(once_a_hour)
 
     # running
+    once_a_hour()
     while True:
         time.sleep(1)
         status_led()

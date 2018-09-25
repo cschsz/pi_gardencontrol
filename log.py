@@ -19,6 +19,6 @@ def line(line):
         f = open("/var/log/pigc_data.log","a")
     except Exception:
         f = open("pigc_data.log","a")
-    f.write(time.strftime("%d.%m.%Y %H:%M") + ";" + line + "\r\n")
+    f.write(time.strftime("%d.%m.%Y %H:00") + ";" + line + "\r\n")
     f.close()
     return
