@@ -41,30 +41,113 @@ FAVICON = b"iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAABHNCSVQICAgIfA\
             ls2sO6gRCeiRZwpwt0RhxPbeK4lItZJaGJhPC5LnOw/TTb/xtC/wvuCFBKGIpn\
             sS4axt8XoC3YTRsT1j7p8S8vWX8F3KzqVgAAAABJRU5ErkJggg=="
 
+#----------------------------[preparechart]
+def preparechart(dht22):
+    js = "\
+<script type='text/javascript' src='https://www.gstatic.com/charts/loader.js'></script>\r\n\
+<script type='text/javascript'>\r\n\
+    google.charts.load('current', {'packages':['corechart']});\r\n\
+    google.charts.setOnLoadCallback(drawChart);\r\n\
+    function drawChart() {\r\n\
+    var data = google.visualization.arrayToDataTable([\r\n"
+
+    if dht22:
+        js += "['Datum', 'Temperatur', 'Humidity'],\r\n"
+    else:
+        js += "['Datum', 'Temperatur'],\r\n"
+
+    js += "*DATA*\r\n\
+    ]);\r\n\
+    \r\n\
+    var options = {\r\n\
+        title: 'Temperaturverlauf',\r\n\
+        curveType: 'function',\r\n\
+        legend: { position: 'none' },\r\n\
+        hAxis: { textPosition: 'none' }\r\n\
+    };\r\n\
+    \r\n\
+    var chart = new google.visualization.LineChart(document.getElementById('curve_chart'));\r\n\
+    chart.draw(data, options);\r\n\
+    }\r\n\
+</script>\r\n"
+    return js
+
+#----------------------------[readdata]
+def readdata(compareidx):
+    try:
+        f = open("/var/log/pigc_data.log","r")
+    except Exception:
+        try:
+            f = open("pigc_data.log","r")
+        except Exception:
+            return ""
+
+    if compareidx == 1:
+        js = preparechart(True)
+    else:
+        js = preparechart(False)
+    data = ""
+    ctime = datetime.datetime.today() - datetime.timedelta(days=15)
+
+    while True:
+        rl = f.readline()
+        if not rl:
+            break
+        line = str(rl)
+
+        try:
+            date = datetime.datetime.strptime(line[:10], "%d.%m.%Y")
+            if date < ctime:
+                continue
+        except Exception:
+            pass
+
+        values = line.split(";")
+        try:
+            tval = values[0]
+            temp = values[compareidx]
+            if compareidx == 1:
+                hum  = values[compareidx+1]
+                try:
+                    x = float(temp)
+                    y = float(hum)
+                    data += "['{:s}', {:s}, {:s}],\r\n".format(tval[:16], temp, hum)
+                except:
+                    pass
+            else:
+                try:
+                    x = float(temp)
+                    data += "['{:s}', {:s}],\r\n".format(tval[:16], temp)
+                except:
+                    pass
+        except Exception:
+            pass
+
+    data  = data.strip(',\r\n')
+    data += "\r\n"
+    js    = js.replace("*DATA*", data)
+    return js
+
 #----------------------------[readlog]
 def readlog(logflag):
+    log = ""
+    js = ""
+
     if   logflag == 1:
-        compare = "temp"
+        return "", readdata(1)
     elif logflag == 2:
-        compare = "websvr"
-    elif logflag == 3:
-        compare = "main"
-    elif logflag == 4:
-        compare = "rf"
-    elif logflag == 5:
-        compare = "pir"
+        return "", readdata(3)
     else:
         compare = " "
 
     ctime = datetime.datetime.today() - datetime.timedelta(days=4)
-    log = ""
     try:
         f = open("/var/log/pigc_{:s}.log".format(time.strftime("%Y-%m")),"r")
     except Exception:
         try:
             f = open("pigc_{:s}.log".format(time.strftime("%Y-%m")),"r")
         except Exception:
-            return "no log found"
+            return "no log found", ""
 
     while True:
         rl = f.readline()
@@ -84,7 +167,7 @@ def readlog(logflag):
     if log == "":
         log = "nothing to display<br>"
 
-    return log
+    return log, js
 
 #----------------------------[generatehtml]
 def generatehtml(logflag):
@@ -96,6 +179,10 @@ def generatehtml(logflag):
     html += "<title>PIgc</title>\r\n"
     if logflag == 0:
         html += "<meta http-equiv='refresh' content='10'>\r\n"
+    else:
+        hlog, hjs = readlog(logflag)
+        if logflag == 1 or logflag == 2:
+            html += hjs
     html += "<link rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css' integrity='sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm' crossorigin='anonymous'>\r\n"
     html += "<link rel='stylesheet' href='https://use.fontawesome.com/releases/v5.1.1/css/all.css' integrity='sha384-O8whS3fhG2OnA5Kas0Y9l3cfpmYjapjI0E4theH4iuMD+pLhbf6JI0jIMfYcK3yZ' crossorigin='anonymous'>\r\n"
     html += "</head>\r\n"
@@ -113,10 +200,11 @@ def generatehtml(logflag):
         html += "Verlauf<br>"
         html += "<form action='' method='post'>"
         html += "<div class='btn-group' role='group' aria-label='Basic example'>"
-        html += "<button type='submit' class='btn btn-success' name='log1'>Temperatur</button>"
-        html += "<button type='submit' class='btn btn-outline-success' name='log2'>Regen</button>"
-        html += "<button type='submit' class='btn btn-success' name='log3'>Bodenfeuchte</button>"
-        html += "<button type='submit' class='btn btn-outline-success' name='log6'>Logfile</button>"
+        html += "<button type='submit' class='btn btn-success' name='log1'>DHT22</button>"
+        html += "<button type='submit' class='btn btn-outline-success' name='log2'>DS1820</button>"
+        html += "<button type='submit' class='btn btn-success' name='log3'>Regen</button>"
+        html += "<button type='submit' class='btn btn-outline-success' name='log4'>Boden</button>"
+        html += "<button type='submit' class='btn btn-success' name='log6'>Logfile</button>"
         html += "</div>"
         html += "</form>"
         html += "<hr>"
@@ -127,11 +215,16 @@ def generatehtml(logflag):
         html += "<button type='submit' class='btn btn-outline-secondary' name='test2'>Kanal 2</button>"
         html += "</div>"
         html += "</form>"
-    elif logflag:
+    elif logflag == 1 or logflag == 2:
+        html += "<h2><i class='fas fa-file'></i> Protokolldatei</h2>"
+        html += "<form action='' method='post'><button type='submit' class='btn btn-success btn-sm' name='mpage'><i class='fas fa-caret-left'></i> &Uuml;bersicht</button></form>"
+        html += "<div id='curve_chart' style='width: 600px; height: 300px'></div>"
+        html += "<form action='' method='post'><button type='submit' class='btn btn-success btn-sm' name='mpage'><i class='fas fa-caret-left'></i> &Uuml;bersicht</button></form>"
+    else:
         html += "<h2><i class='fas fa-file'></i> Protokolldatei</h2>"
         html += "<form action='' method='post'><button type='submit' class='btn btn-success btn-sm' name='mpage'><i class='fas fa-caret-left'></i> &Uuml;bersicht</button></form>"
         html += "<p><pre>"
-        html += readlog(logflag)
+        html += hlog
         html += "</pre></p>"
         html += "<form action='' method='post'><button type='submit' class='btn btn-success btn-sm' name='mpage'><i class='fas fa-caret-left'></i> &Uuml;bersicht</button></form>"
     html += "\r\n</main>\r\n"
