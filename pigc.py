@@ -52,7 +52,6 @@ def main():
     schedule.every().hour.at(':00').do(once_a_hour)
 
     # running
-    once_a_hour()
     while True:
         time.sleep(1)
         status_led()

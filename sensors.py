@@ -5,7 +5,7 @@ import socket
 import time
 import log
 
-array = [ "?", "?", "?", "?"]
+array = [ "?", "?", "?", "?", "?", "?", "?"] # dht-temp, dht-humi, ds1820(1), ds1820(2), ds1820(3), boden, regen
 sflag = False
 
 #----------------------------[read]
@@ -19,7 +19,7 @@ def sensordata(data):
     try:
         if data[:5] == "pigc;":
             xarr = data.split(";")
-            if len(xarr) == 5:
+            if len(xarr) == 8:
                 xarr.remove("pigc")
                 array = list(xarr)
     except Exception:
@@ -48,7 +48,7 @@ def sensorthread():
         try:
             conn, addr = s.accept()
             conn.settimeout(1)
-            log.info("sensor", "connection accepted " + str(addr))
+            #log.info("sensor", "connection accepted " + str(addr))
             while True:
                 try:
                     data = str(conn.recv(128), "utf-8")
@@ -61,7 +61,7 @@ def sensorthread():
                         log.info("sensor", "stop")
                         return
             conn.close()
-            log.info("sensor", "connection closed")
+            #log.info("sensor", "connection closed")
         except socket.timeout:
             if sflag == True:
                 s.close()

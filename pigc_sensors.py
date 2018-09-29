@@ -16,21 +16,23 @@ def senddata(array):
     except Exception:
         log.info("dht", "connection failed")
         return
-    data = "pigc;{:s};{:s};{:s};{:s}".format(array[0], array[1], array[2], array[3])
+    data = "pigc;{:s};{:s};{:s};{:s};{:s};{:s};{:s}".format(array[0], array[1], array[2], array[3], array[4], array[5], array[6])
     s.send(data.encode("utf-8"))
     s.close()
     return
 
 #----------------------------[ds1820]
 def ds1820():
+    values = [ "?", "?", "?"]
     try:
         file = open('/sys/devices/w1_bus_master1/w1_master_slaves')
         w1_slaves = file.readlines()
         file.close()
     except Exception:
         log.info("dht", "ds1820: access denied")
-        return "?", "-"
+        return values
 
+    pos = 0
     try:
         for line in w1_slaves:
             w1_slave = line.split("\n")[0]
@@ -43,16 +45,18 @@ def ds1820():
 
             sval = "{:.1f}".format(temperature)
             print ("DS1820: " + sval)
-            return sval, "-"
+            if pos < 3:
+                values[pos] = sval
+            pos += 1
 
     except Exception:
         log.info("dht", "ds1820: device error")
 
-    return "?", "-"
+    return values
 
 #----------------------------[main]
 def main():
-    array = [ "?", "?", "?", "?"]
+    array = [ "?", "?", "?", "?", "?", "?", "?"]
     GPIO.setmode(GPIO.BOARD)
     GPIO.setup(status_led, GPIO.OUT)
     GPIO.output(status_led, GPIO.HIGH)
@@ -60,7 +64,9 @@ def main():
         humidity, temperature = DHT.read_retry(DHT.DHT22, 10)
         array[0] = str(temperature)
         array[1] = str(humidity)
-        array[2], array[3] = ds1820()
+        array[2], array[3], array[4] = ds1820()
+        array[5] = "?"
+        array[6] = "?"
         print (array)
         senddata(array)
         for i in range (12):

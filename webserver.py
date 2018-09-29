@@ -42,7 +42,7 @@ FAVICON = b"iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAABHNCSVQICAgIfA\
             sS4axt8XoC3YTRsT1j7p8S8vWX8F3KzqVgAAAABJRU5ErkJggg=="
 
 #----------------------------[preparechart]
-def preparechart(dht22):
+def preparechart(header, data):
     js = "\
 <script type='text/javascript' src='https://www.gstatic.com/charts/loader.js'></script>\r\n\
 <script type='text/javascript'>\r\n\
@@ -50,14 +50,9 @@ def preparechart(dht22):
     google.charts.setOnLoadCallback(drawChart);\r\n\
     function drawChart() {\r\n\
     var data = google.visualization.arrayToDataTable([\r\n"
-
-    if dht22:
-        js += "['Datum', 'Temperatur', 'Humidity'],\r\n"
-    else:
-        js += "['Datum', 'Temperatur'],\r\n"
-
-    js += "*DATA*\r\n\
-    ]);\r\n\
+    js += header + ",\r\n"
+    js += data + "\r\n"
+    js += "]);\r\n\
     \r\n\
     var options = {\r\n\
         title: 'Temperaturverlauf',\r\n\
@@ -74,21 +69,20 @@ def preparechart(dht22):
 
 #----------------------------[readdata]
 def readdata(compareidx):
+    log = ""
+    js  = ""
     try:
         f = open("/var/log/pigc_data.log","r")
     except Exception:
         try:
             f = open("pigc_data.log","r")
         except Exception:
-            return ""
+            return log, js
 
-    if compareidx == 1:
-        js = preparechart(True)
-    else:
-        js = preparechart(False)
     data = ""
+    dat2 = ""
     ctime = datetime.datetime.today() - datetime.timedelta(days=15)
-
+    sensors = 3
     while True:
         rl = f.readline()
         if not rl:
@@ -105,39 +99,66 @@ def readdata(compareidx):
         values = line.split(";")
         try:
             tval = values[0]
-            temp = values[compareidx]
             if compareidx == 1:
-                hum  = values[compareidx+1]
+                temp = values[1]
+                humi  = values[2]
                 try:
                     x = float(temp)
-                    y = float(hum)
-                    data += "['{:s}', {:s}, {:s}],\r\n".format(tval[:16], temp, hum)
+                    y = float(humi)
+                    data += "['{:s}', {:s}, {:s}],\r\n".format(tval[:16], temp, humi)
+                    log += "{:s} {:>5s} &deg;C {:>5s} %<br>".format(tval, temp, humi)
                 except:
-                    pass
+                    log += "{:s} {:>5s} &deg;C {:>5s} %<br>".format(tval, "-", "-")
             else:
+                temp = values[3]
+                tem2 = values[4]
+                tem3 = values[5]
                 try:
                     x = float(temp)
+                    x = float(tem2)
+                    x = float(tem3)
                     data += "['{:s}', {:s}],\r\n".format(tval[:16], temp)
+                    dat2 += "['{:s}', {:s}, {:s}, {:s}],\r\n".format(tval[:16], temp, tem2, tem3)
+                    log += "{:s} {:>5s} &deg;C {:>5s} &deg;C {:>5s} &deg;C<br>".format(tval, temp, tem2, tem3)
                 except:
-                    pass
+                    try:
+                        x = float(temp)
+                        data += "['{:s}', {:s}],\r\n".format(tval[:16], temp)
+                        log += "{:s} {:>5s} &deg;C<br>".format(tval, temp)
+                        sensors = 1
+                    except:
+                        log += "{:s} {:>5s} &deg;C<br>".format(tval, "-", "-")
         except Exception:
+            log += "-<br>"
             pass
 
     data  = data.strip(',\r\n')
     data += "\r\n"
-    js    = js.replace("*DATA*", data)
-    return js
+    if compareidx == 1:
+        js = preparechart("['Datum', 'Temperatur', 'Humidity']", data)
+    else:
+        if sensors == 1:
+            js = preparechart("['Datum', 'Temperatur1']", data)
+        else:
+            js = preparechart("['Datum', 'Temperatur1', 'Temperatur2', 'Temperatur3']", dat2)
+
+    if log == "":
+        log = "nothing to display<br>"
+
+    return log, js
 
 #----------------------------[readlog]
 def readlog(logflag):
-    log = ""
-    js = ""
-
     if   logflag == 1:
-        return "", readdata(1)
+        return readdata(1)
     elif logflag == 2:
-        return "", readdata(3)
+        return readdata(2)
+    elif logflag == 3:
+        return "nothing to display<br>", ""
+    elif logflag == 4:
+        return "nothing to display<br>", ""
     else:
+        log = ""
         compare = " "
 
     ctime = datetime.datetime.today() - datetime.timedelta(days=4)
@@ -167,7 +188,7 @@ def readlog(logflag):
     if log == "":
         log = "nothing to display<br>"
 
-    return log, js
+    return log, ""
 
 #----------------------------[generatehtml]
 def generatehtml(logflag):
@@ -215,14 +236,11 @@ def generatehtml(logflag):
         html += "<button type='submit' class='btn btn-outline-secondary' name='test2'>Kanal 2</button>"
         html += "</div>"
         html += "</form>"
-    elif logflag == 1 or logflag == 2:
-        html += "<h2><i class='fas fa-file'></i> Protokolldatei</h2>"
-        html += "<form action='' method='post'><button type='submit' class='btn btn-success btn-sm' name='mpage'><i class='fas fa-caret-left'></i> &Uuml;bersicht</button></form>"
-        html += "<div id='curve_chart' style='width: 600px; height: 300px'></div>"
-        html += "<form action='' method='post'><button type='submit' class='btn btn-success btn-sm' name='mpage'><i class='fas fa-caret-left'></i> &Uuml;bersicht</button></form>"
     else:
         html += "<h2><i class='fas fa-file'></i> Protokolldatei</h2>"
         html += "<form action='' method='post'><button type='submit' class='btn btn-success btn-sm' name='mpage'><i class='fas fa-caret-left'></i> &Uuml;bersicht</button></form>"
+        if logflag == 1 or logflag == 2:
+            html += "<div id='curve_chart' style='width: 600px; height: 300px'></div>"
         html += "<p><pre>"
         html += hlog
         html += "</pre></p>"
