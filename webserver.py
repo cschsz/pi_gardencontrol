@@ -71,6 +71,8 @@ def preparechart(header, data):
 def readdata(compareidx):
     log = ""
     js  = ""
+    min = [  99.0,  99.0,  99.0 ]
+    max = [ -99.0, -99.0, -99.0 ]
     try:
         f = open("/var/log/pigc_data.log","r")
     except Exception:
@@ -104,7 +106,15 @@ def readdata(compareidx):
                 humi  = values[2]
                 try:
                     x = float(temp)
-                    y = float(humi)
+                    if x < min[0]:
+                        min[0] = x
+                    if x > max[0]:
+                        max[0] = x
+                    x = float(humi)
+                    if x < min[1]:
+                        min[1] = x
+                    if x > max[1]:
+                        max[1] = x
                     data += "['{:s}', {:s}, {:s}],\r\n".format(tval[:16], temp, humi)
                     log += "{:s} {:>5s} &deg;C {:>5s} %<br>".format(tval, temp, humi)
                 except:
@@ -115,14 +125,30 @@ def readdata(compareidx):
                 tem3 = values[5]
                 try:
                     x = float(temp)
+                    if x < min[0]:
+                        min[0] = x
+                    if x > max[0]:
+                        max[0] = x
                     x = float(tem2)
+                    if x < min[1]:
+                        min[1] = x
+                    if x > max[1]:
+                        max[1] = x
                     x = float(tem3)
+                    if x < min[2]:
+                        min[2] = x
+                    if x > max[2]:
+                        max[2] = x
                     data += "['{:s}', {:s}],\r\n".format(tval[:16], temp)
                     dat2 += "['{:s}', {:s}, {:s}, {:s}],\r\n".format(tval[:16], temp, tem2, tem3)
                     log += "{:s} {:>5s} &deg;C {:>5s} &deg;C {:>5s} &deg;C<br>".format(tval, temp, tem2, tem3)
                 except:
                     try:
                         x = float(temp)
+                        if x < min[0]:
+                            min[0] = x
+                        if x > max[0]:
+                            max[0] = x
                         data += "['{:s}', {:s}],\r\n".format(tval[:16], temp)
                         log += "{:s} {:>5s} &deg;C<br>".format(tval, temp)
                         sensors = 1
@@ -135,11 +161,29 @@ def readdata(compareidx):
     data  = data.strip(',\r\n')
     data += "\r\n"
     if compareidx == 1:
+        if min != 99.0:
+            smi1 = "{:3.1f}".format(min[0])
+            sma1 = "{:3.1f}".format(max[0])
+            smi2 = "{:3.1f}".format(min[1])
+            sma2 = "{:3.1f}".format(max[1])
+            log = "<b>min:             {:>5s} &deg;C {:>5s} %<br>min:             {:>5s} &deg;C {:>5s} %<br><br></b>".format(smi1, smi2, sma1, sma2) + log
         js = preparechart("['Datum', 'Temperatur', 'Humidity']", data)
     else:
         if sensors == 1:
+            if min != 99.0:
+                smi1 = "{:3.1f}".format(min[0])
+                sma1 = "{:3.1f}".format(max[0])
+                log = "<b>min:             {:>5s} &deg;C<br>min:             {:>5s} &deg;C<br><br></b>".format(smi1, sma1) + log
             js = preparechart("['Datum', 'Temperatur1']", data)
         else:
+            if min != 99.0:
+                smi1 = "{:3.1f}".format(min[0])
+                sma1 = "{:3.1f}".format(max[0])
+                smi2 = "{:3.1f}".format(min[1])
+                sma2 = "{:3.1f}".format(max[1])
+                smi3 = "{:3.1f}".format(min[2])
+                sma3 = "{:3.1f}".format(max[2])
+                log = "<b>min:             {:>5s} &deg;C {:>5s} &deg;C {:>5s} &deg;C<br>min:             {:>5s} &deg;C {:>5s} &deg;C {:>5s} &deg;C<br><br></b>".format(smi1, smi2, smi3, sma1, sma2, sma3) + log
             js = preparechart("['Datum', 'Temperatur1', 'Temperatur2', 'Temperatur3']", dat2)
 
     if log == "":
