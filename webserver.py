@@ -12,6 +12,7 @@ import ssl
 
 s_hsvr = None
 s_key  = ""
+fkt_getsensors = None
 
 FAVICON = b"iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAABHNCSVQICAgIfA\
             hkiAAABJVJREFUWIW9lmtsk2UUx3/v2/Zd18tK25WuG6wbsDIuMifMIdkUnATl\
@@ -255,10 +256,11 @@ def generatehtml(logflag):
     html += "<div class='container'>\r\n"
     html += "<main>\r\n"
     if logflag == 0:
+        values = fkt_getsensors()
         html += "<h2><i class='fab fa-pagelines'></i> PIgc</h2>"
         html += "<p>{:s}</p>".format(time.strftime("%d.%m.%Y %H:%M:%S",time.localtime()))
         html += "<hr>"
-        html += "<div class='alert alert-secondary' role='alert'>Temperatur: ?</div>"
+        html += "<div class='alert alert-secondary' role='alert'>Temperatur: {:s} &deg;C {:s} %</div>".format(values[0], values[1])
         html += "<div class='alert alert-secondary' role='alert'>Regen/Bodenfeuchte: ?</div>"
         html += "<div class='alert alert-secondary' role='alert'>Bewässerung: ?</div>"
         html += "<hr>"
@@ -452,7 +454,11 @@ def stop():
     return
 
 #----------------------------[start]
-def start():
+def start(fgetsensors):
+    global fkt_getsensors
+
+    fkt_getsensors = fgetsensors
+
     thread = threading.Thread(target=serverthread, args=[])
     thread.start()
     return

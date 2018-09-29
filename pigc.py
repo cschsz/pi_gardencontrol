@@ -20,8 +20,8 @@ def status_led():
     s_stoggle = not s_stoggle
     GPIO.ledgrn(s_stoggle)
 
-#----------------------------[once_a_hour]
-def once_a_hour():
+#----------------------------[getsensors]
+def getsensors():
     #read
     values = sensors.read()
 
@@ -31,6 +31,13 @@ def once_a_hour():
             values[i] = "{:3.1f}".format(float(values[i]))
         except Exception:
             pass
+
+    return values
+
+#----------------------------[once_a_hour]
+def once_a_hour():
+    #read
+    values = getsensors()
 
     # log
     log.info("main", "once_a_hour")
@@ -48,7 +55,7 @@ def main():
     # init
     GPIO.init()
     sensors.start()
-    webserver.start()
+    webserver.start(getsensors)
     schedule.every().hour.at(':00').do(once_a_hour)
 
     # running
