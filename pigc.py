@@ -28,7 +28,7 @@ def once_a_hour():
     # format
     for i in range(len(values)):
         try:
-            values[i] = "{:3.0f}".format(float(values[i]))
+            values[i] = "{:3.1f}".format(float(values[i]))
         except Exception:
             pass
 
