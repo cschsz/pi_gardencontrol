@@ -43,29 +43,49 @@ FAVICON = b"iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAABHNCSVQICAgIfA\
             sS4axt8XoC3YTRsT1j7p8S8vWX8F3KzqVgAAAABJRU5ErkJggg=="
 
 #----------------------------[preparechart]
-def preparechart(header, data):
-    js = "\
-<script type='text/javascript' src='https://www.gstatic.com/charts/loader.js'></script>\r\n\
-<script type='text/javascript'>\r\n\
-    google.charts.load('current', {'packages':['corechart']});\r\n\
-    google.charts.setOnLoadCallback(drawChart);\r\n\
-    function drawChart() {\r\n\
-    var data = google.visualization.arrayToDataTable([\r\n"
+def preparechart(header, data, twoaxis):
+    js ="""
+<script type='text/javascript' src='https://www.gstatic.com/charts/loader.js'></script>
+<script type='text/javascript'>
+    google.charts.load('current', {'packages':['corechart']});
+    google.charts.setOnLoadCallback(drawChart);
+
+    function drawChart() {
+    var data = google.visualization.arrayToDataTable(["""
     js += header + ",\r\n"
-    js += data + "\r\n"
-    js += "]);\r\n\
-    \r\n\
-    var options = {\r\n\
-        title: 'Temperaturverlauf',\r\n\
-        curveType: 'function',\r\n\
-        legend: { position: 'none' },\r\n\
-        hAxis: { textPosition: 'none' }\r\n\
-    };\r\n\
-    \r\n\
-    var chart = new google.visualization.LineChart(document.getElementById('curve_chart'));\r\n\
-    chart.draw(data, options);\r\n\
-    }\r\n\
-</script>\r\n"
+    js += data
+    js += "]);\r\n"
+    js += """
+    var options = {
+        curveType: 'function',
+        legend: { position: 'none' },
+        hAxis: { textPosition: 'none' }"""
+
+    if twoaxis == True:
+        js += """,
+        series: {
+          0: {targetAxisIndex: 0},
+          1: {targetAxisIndex: 1}
+        },
+        vAxes: {
+          0: {title: 'Temperatur (C)', textStyle: { color: '#3366CC' } },
+          1: {title: 'Luftfeuchtigkeit (%)', textStyle: { color: '#DC3912' } }
+        }
+        """
+    else:
+        js += """,
+        vAxis: { title: 'Temperatur (C)' }
+        """
+
+    js += """
+    };
+
+    var chart = new google.visualization.LineChart(document.getElementById('curve_chart'));
+    chart.draw(data, options);
+    }
+</script>
+"""
+    print(js)
     return js
 
 #----------------------------[readdata]
@@ -73,7 +93,9 @@ def readdata(compareidx):
     log = ""
     js  = ""
     min = [  99.0,  99.0,  99.0 ]
+    smi = list(min)
     max = [ -99.0, -99.0, -99.0 ]
+    sma = list(max)
     try:
         f = open("/var/log/pigc_data.log","r")
     except Exception:
@@ -84,7 +106,7 @@ def readdata(compareidx):
 
     data = ""
     dat2 = ""
-    ctime = datetime.datetime.today() - datetime.timedelta(days=15)
+    ctime = datetime.datetime.today() - datetime.timedelta(days=8)
     sensors = 3
     while True:
         rl = f.readline()
@@ -159,33 +181,25 @@ def readdata(compareidx):
             log += "-<br>"
             pass
 
+    for i in range(len(min)):
+        smi[i] = "{:3.1f}".format(min[i])
+        sma[i] = "{:3.1f}".format(max[i])
+
     data  = data.strip(',\r\n')
     data += "\r\n"
     if compareidx == 1:
         if min != 99.0:
-            smi1 = "{:3.1f}".format(min[0])
-            sma1 = "{:3.1f}".format(max[0])
-            smi2 = "{:3.1f}".format(min[1])
-            sma2 = "{:3.1f}".format(max[1])
-            log = "<b>min:             {:>5s} &deg;C {:>5s} %<br>min:             {:>5s} &deg;C {:>5s} %<br><br></b>".format(smi1, smi2, sma1, sma2) + log
-        js = preparechart("['Datum', 'Temperatur', 'Humidity']", data)
+            log = "<b>min:             {:>5s} &deg;C {:>5s} %<br>max:             {:>5s} &deg;C {:>5s} %<br><br></b>".format(smi[0], smi[1], sma[0], sma[1]) + log
+        js = preparechart("['Datum', 'Temperatur', 'Humidity']", data, True)
     else:
         if sensors == 1:
             if min != 99.0:
-                smi1 = "{:3.1f}".format(min[0])
-                sma1 = "{:3.1f}".format(max[0])
-                log = "<b>min:             {:>5s} &deg;C<br>min:             {:>5s} &deg;C<br><br></b>".format(smi1, sma1) + log
-            js = preparechart("['Datum', 'Temperatur1']", data)
+                log = "<b>min:             {:>5s} &deg;C<br>max:             {:>5s} &deg;C<br><br></b>".format(smi[0], sma[0]) + log
+            js = preparechart("['Datum', 'Temperatur1']", data, False)
         else:
             if min != 99.0:
-                smi1 = "{:3.1f}".format(min[0])
-                sma1 = "{:3.1f}".format(max[0])
-                smi2 = "{:3.1f}".format(min[1])
-                sma2 = "{:3.1f}".format(max[1])
-                smi3 = "{:3.1f}".format(min[2])
-                sma3 = "{:3.1f}".format(max[2])
-                log = "<b>min:             {:>5s} &deg;C {:>5s} &deg;C {:>5s} &deg;C<br>min:             {:>5s} &deg;C {:>5s} &deg;C {:>5s} &deg;C<br><br></b>".format(smi1, smi2, smi3, sma1, sma2, sma3) + log
-            js = preparechart("['Datum', 'Temperatur1', 'Temperatur2', 'Temperatur3']", dat2)
+                log = "<b>min:             {:>5s} &deg;C {:>5s} &deg;C {:>5s} &deg;C<br>min:             {:>5s} &deg;C {:>5s} &deg;C {:>5s} &deg;C<br><br></b>".format(smi[0], smi[1], smi[2], sma[0], sma[1], sma[2]) + log
+            js = preparechart("['Datum', 'Temperatur1', 'Temperatur2', 'Temperatur3']", dat2, False)
 
     if log == "":
         log = "nothing to display<br>"
