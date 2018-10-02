@@ -90,12 +90,13 @@ def preparechart(header, data, twoaxis):
 
 #----------------------------[readdata]
 def readdata(compareidx):
-    log = ""
-    js  = ""
-    min = [  99.0,  99.0,  99.0 ]
-    smi = list(min)
-    max = [ -99.0, -99.0, -99.0 ]
-    sma = list(max)
+    last = ""
+    log  = ""
+    js   = ""
+    min  = [  99.0,  99.0,  99.0 ]
+    smi  = list(min)
+    max  = [ -99.0, -99.0, -99.0 ]
+    sma  = list(max)
     try:
         f = open("/var/log/pigc_data.log","r")
     except Exception:
@@ -138,10 +139,12 @@ def readdata(compareidx):
                         min[1] = x
                     if x > max[1]:
                         max[1] = x
-                    data += "['{:s}', {:s}, {:s}],\r\n".format(tval[:16], temp, humi)
-                    log += "{:s} {:>5s} &deg;C {:>5s} %<br>".format(tval, temp, humi)
+                    data += "['{:s}', {:s}, {:s}],\r\n".format(tval, temp, humi)
+                    last = "{:s} {:>5s} &deg;C {:>5s} %<br>".format(tval, temp, humi)
+                    log += last
                 except:
-                    log += "{:s} {:>5s} &deg;C {:>5s} %<br>".format(tval, "-", "-")
+                    last = "{:s} {:>5s} &deg;C {:>5s} %<br>".format(tval, "-", "-")
+                    log += last
             else:
                 temp = values[3]
                 tem2 = values[4]
@@ -162,9 +165,10 @@ def readdata(compareidx):
                         min[2] = x
                     if x > max[2]:
                         max[2] = x
-                    data += "['{:s}', {:s}],\r\n".format(tval[:16], temp)
-                    dat2 += "['{:s}', {:s}, {:s}, {:s}],\r\n".format(tval[:16], temp, tem2, tem3)
-                    log += "{:s} {:>5s} &deg;C {:>5s} &deg;C {:>5s} &deg;C<br>".format(tval, temp, tem2, tem3)
+                    data += "['{:s}', {:s}],\r\n".format(tval, temp)
+                    dat2 += "['{:s}', {:s}, {:s}, {:s}],\r\n".format(tval, temp, tem2, tem3)
+                    last = "{:s} {:>5s} &deg;C {:>5s} &deg;C {:>5s} &deg;C<br>".format(tval, temp, tem2, tem3)
+                    log += last
                 except:
                     try:
                         x = float(temp)
@@ -172,11 +176,13 @@ def readdata(compareidx):
                             min[0] = x
                         if x > max[0]:
                             max[0] = x
-                        data += "['{:s}', {:s}],\r\n".format(tval[:16], temp)
-                        log += "{:s} {:>5s} &deg;C<br>".format(tval, temp)
+                        data += "['{:s}', {:s}],\r\n".format(tval, temp)
+                        last = "{:s} {:>5s} &deg;C<br>".format(tval, temp)
+                        log += last
                         sensors = 1
                     except:
-                        log += "{:s} {:>5s} &deg;C<br>".format(tval, "-", "-")
+                        last = "{:s} {:>5s} &deg;C<br>".format(tval, "-", "-")
+                        log += last
         except Exception:
             log += "-<br>"
             pass
@@ -187,22 +193,21 @@ def readdata(compareidx):
 
     data  = data.strip(',\r\n')
     data += "\r\n"
-    if compareidx == 1:
-        if min != 99.0:
-            log = "<b>min:             {:>5s} &deg;C {:>5s} %<br>max:             {:>5s} &deg;C {:>5s} %<br><br></b>".format(smi[0], smi[1], sma[0], sma[1]) + log
-        js = preparechart("['Datum', 'Temperatur', 'Humidity']", data, True)
-    else:
-        if sensors == 1:
-            if min != 99.0:
-                log = "<b>min:             {:>5s} &deg;C<br>max:             {:>5s} &deg;C<br><br></b>".format(smi[0], sma[0]) + log
-            js = preparechart("['Datum', 'Temperatur1']", data, False)
-        else:
-            if min != 99.0:
-                log = "<b>min:             {:>5s} &deg;C {:>5s} &deg;C {:>5s} &deg;C<br>min:             {:>5s} &deg;C {:>5s} &deg;C {:>5s} &deg;C<br><br></b>".format(smi[0], smi[1], smi[2], sma[0], sma[1], sma[2]) + log
-            js = preparechart("['Datum', 'Temperatur1', 'Temperatur2', 'Temperatur3']", dat2, False)
 
     if log == "":
         log = "nothing to display<br>"
+    else:
+        if compareidx == 1:
+            log = "<b>min:             {:>5s} &deg;C {:>5s} %<br>max:             {:>5s} &deg;C {:>5s} %<br><br></b>".format(smi[0], smi[1], sma[0], sma[1]) + log
+            js = preparechart("['Datum', 'Temperatur', 'Humidity']", data, True)
+        else:
+            if sensors == 1:
+                log = "<b>min:             {:>5s} &deg;C<br>max:             {:>5s} &deg;C<br><br></b>".format(smi[0], sma[0]) + log
+                js = preparechart("['Datum', 'Temperatur1']", data, False)
+            else:
+                log = "<b>min:             {:>5s} &deg;C {:>5s} &deg;C {:>5s} &deg;C<br>min:             {:>5s} &deg;C {:>5s} &deg;C {:>5s} &deg;C<br><br></b>".format(smi[0], smi[1], smi[2], sma[0], sma[1], sma[2]) + log
+                js = preparechart("['Datum', 'Temperatur1', 'Temperatur2', 'Temperatur3']", dat2, False)
+        log = "<i>letzte Messung:<br>{:s}<br></i>".format(last) + log
 
     return log, js
 
@@ -297,10 +302,20 @@ def generatehtml(logflag):
         html += "</div>"
         html += "</form>"
     else:
-        html += "<h2><i class='fas fa-file'></i> Protokolldatei</h2>"
+        if logflag == 1:
+            name = "DHT22"
+        elif logflag == 2:
+            name = "DS1820"
+        elif logflag == 3:
+            name = "Regen"
+        elif logflag == 4:
+            name = "Bodenfeuchte"
+        else:
+            name = "Protokolldatei"
+        html += "<h2><i class='fas fa-file'></i> {:s}</h2>".format(name)
         html += "<form action='' method='post'><button type='submit' class='btn btn-success btn-sm' name='mpage'><i class='fas fa-caret-left'></i> &Uuml;bersicht</button></form>"
         if logflag == 1 or logflag == 2:
-            html += "<div id='curve_chart' style='width: 600px; height: 300px'></div>"
+            html += "<div id='curve_chart' style='width: 700px; height: 350px'></div>"
         html += "<p><pre>"
         html += hlog
         html += "</pre></p>"
