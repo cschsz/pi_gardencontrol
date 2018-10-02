@@ -47,17 +47,17 @@ def preparechart(header, data, twoaxis):
     js ="""
 <script type='text/javascript' src='https://www.gstatic.com/charts/loader.js'></script>
 <script type='text/javascript'>
-    google.charts.load('current', {'packages':['corechart']});
+    google.charts.load('current', {'packages':['line', 'corechart']});
     google.charts.setOnLoadCallback(drawChart);
 
     function drawChart() {
+
     var data = google.visualization.arrayToDataTable(["""
     js += header + ",\r\n"
     js += data
     js += "]);\r\n"
     js += """
     var options = {
-        curveType: 'function',
         legend: { position: 'none' },
         hAxis: { textPosition: 'none' }"""
 
@@ -68,20 +68,20 @@ def preparechart(header, data, twoaxis):
           1: {targetAxisIndex: 1}
         },
         vAxes: {
-          0: {title: 'Temperatur (C)', textStyle: { color: '#3366CC' } },
-          1: {title: 'Luftfeuchtigkeit (%)', textStyle: { color: '#DC3912' } }
+          0: {title: 'Temperatur (C)', format: 'decimal', textStyle: {color: '#3366CC'} },
+          1: {title: 'Luftfeuchtigkeit', format: 'percent', textStyle: {color: '#DC3912'} }
         }
         """
     else:
         js += """,
-        vAxis: { title: 'Temperatur (C)' }
+        vAxis: {title: 'Temperatur (C)', textStyle: {color: '#3366CC'} }
         """
 
     js += """
     };
 
-    var chart = new google.visualization.LineChart(document.getElementById('curve_chart'));
-    chart.draw(data, options);
+    var materialChart = new google.charts.Line(document.getElementById('chart_div'));
+    materialChart.draw(data, google.charts.Line.convertOptions(options));
     }
 </script>
 """
@@ -139,7 +139,7 @@ def readdata(compareidx):
                         min[1] = x
                     if x > max[1]:
                         max[1] = x
-                    data += "['{:s}', {:s}, {:s}],\r\n".format(tval, temp, humi)
+                    data += "['{:s}', {:s}, {:f}],\r\n".format(tval, temp, x / 100.0)
                     last = "{:s} {:>5s} &deg;C {:>5s} %<br>".format(tval, temp, humi)
                     log += last
                 except:
@@ -315,7 +315,7 @@ def generatehtml(logflag):
         html += "<h2><i class='fas fa-file'></i> {:s}</h2>".format(name)
         html += "<form action='' method='post'><button type='submit' class='btn btn-success btn-sm' name='mpage'><i class='fas fa-caret-left'></i> &Uuml;bersicht</button></form>"
         if logflag == 1 or logflag == 2:
-            html += "<div id='curve_chart' style='width: 700px; height: 350px'></div>"
+            html += "<div id='chart_div' style='width: 700px; height: 350px'></div>"
         html += "<p><pre>"
         html += hlog
         html += "</pre></p>"
