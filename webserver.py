@@ -107,7 +107,7 @@ def readdata(compareidx):
 
     data = ""
     dat2 = ""
-    ctime = datetime.datetime.today() - datetime.timedelta(days=8)
+    ctime = datetime.datetime.today() - datetime.timedelta(days=7)
     sensors = 3
     while True:
         rl = f.readline()
@@ -116,7 +116,7 @@ def readdata(compareidx):
         line = str(rl)
 
         try:
-            date = datetime.datetime.strptime(line[:10], "%d.%m.%Y")
+            date = datetime.datetime.strptime(line[:13], "%d.%m.%Y %H")
             if date < ctime:
                 continue
         except Exception:
@@ -197,17 +197,18 @@ def readdata(compareidx):
     if log == "":
         log = "nothing to display<br>"
     else:
-        if compareidx == 1:
-            log = "<b>min:             {:>5s} &deg;C {:>5s} %<br>max:             {:>5s} &deg;C {:>5s} %<br><br></b>".format(smi[0], smi[1], sma[0], sma[1]) + log
-            js = preparechart("['Datum', 'Temperatur', 'Humidity']", data, True)
-        else:
-            if sensors == 1:
-                log = "<b>min:             {:>5s} &deg;C<br>max:             {:>5s} &deg;C<br><br></b>".format(smi[0], sma[0]) + log
-                js = preparechart("['Datum', 'Temperatur1']", data, False)
+        if min[0] != 99.0:
+            if compareidx == 1:
+                log = "<b>min:             {:>5s} &deg;C {:>5s} %<br>max:             {:>5s} &deg;C {:>5s} %<br><br></b>".format(smi[0], smi[1], sma[0], sma[1]) + log
+                js = preparechart("['Datum', 'Temperatur', 'Luftfeuchtigkeit']", data, True)
             else:
-                log = "<b>min:             {:>5s} &deg;C {:>5s} &deg;C {:>5s} &deg;C<br>min:             {:>5s} &deg;C {:>5s} &deg;C {:>5s} &deg;C<br><br></b>".format(smi[0], smi[1], smi[2], sma[0], sma[1], sma[2]) + log
-                js = preparechart("['Datum', 'Temperatur1', 'Temperatur2', 'Temperatur3']", dat2, False)
-        log = "<i>letzte Messung:<br>{:s}<br></i>".format(last) + log
+                if sensors == 1:
+                    log = "<b>min:             {:>5s} &deg;C<br>max:             {:>5s} &deg;C<br><br></b>".format(smi[0], sma[0]) + log
+                    js = preparechart("['Datum', 'Temperatur1']", data, False)
+                else:
+                    log = "<b>min:             {:>5s} &deg;C {:>5s} &deg;C {:>5s} &deg;C<br>min:             {:>5s} &deg;C {:>5s} &deg;C {:>5s} &deg;C<br><br></b>".format(smi[0], smi[1], smi[2], sma[0], sma[1], sma[2]) + log
+                    js = preparechart("['Datum', 'Temperatur1', 'Temperatur2', 'Temperatur3']", dat2, False)
+            log = "<i>letzte Messung:<br>{:s}<br></i>".format(last) + log
 
     return log, js
 
