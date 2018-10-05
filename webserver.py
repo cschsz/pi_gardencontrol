@@ -266,6 +266,7 @@ def generatehtml(logflag):
     if logflag == 0:
         html += "<meta http-equiv='refresh' content='10'>\r\n"
     else:
+        html += "<meta http-equiv='refresh' content='300'>\r\n"
         hlog, hjs = readlog(logflag)
         if logflag == 1 or logflag == 2:
             html += hjs
