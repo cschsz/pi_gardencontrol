@@ -281,9 +281,10 @@ def generatehtml(logflag):
         html += "<h2><i class='fab fa-pagelines'></i> PIgc</h2>"
         html += "<p>{:s}</p>".format(time.strftime("%d.%m.%Y %H:%M:%S",time.localtime()))
         html += "<hr>"
-        html += "<div class='alert alert-secondary' role='alert'>Temperatur: {:s} &deg;C {:s} %</div>".format(values[0], values[1])
+        html += "<div class='alert alert-secondary' role='alert'>Temperatur: {:s}&nbsp;&nbsp;&nbsp;{:s}&nbsp;&nbsp;&nbsp;{:s} &deg;C<br>System: {:s} &deg;C {:s} %</div>".format(values[2], values[3], values[4], values[0], values[1])
         html += "<div class='alert alert-secondary' role='alert'>Regen/Bodenfeuchte: ?</div>"
-        html += "<div class='alert alert-secondary' role='alert'>Bewässerung: ?</div>"
+        html += "<div class='alert alert-secondary' role='alert'>Bew&auml;sserung: ?</div>"
+        html += "<div class='alert alert-secondary' role='alert'>Rasenm&auml;her: ?</div>"
         html += "<hr>"
         html += "Verlauf<br>"
         html += "<form action='' method='post'>"
