@@ -18,7 +18,7 @@ def status_led():
     global s_stoggle
 
     s_stoggle = not s_stoggle
-    GPIO.ledgrn(s_stoggle)
+    GPIO.ledstatus(s_stoggle)
 
 #----------------------------[getsensors]
 def getsensors():

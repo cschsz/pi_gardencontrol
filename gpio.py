@@ -51,33 +51,22 @@ except ImportError:
     def cleanup():
         return
 
-pin_red = 12
-pin_grn = 16
+pin_led = 12
 
-#----------------------------[ledred]
-def ledred(value):
+#----------------------------[ledstatus]
+def ledstatus(value):
     if value == 1:
-        output(pin_red, HIGH)
+        output(pin_led, HIGH)
     else:
-        output(pin_red, LOW)
-    return
-
-#----------------------------[ledgrn]
-def ledgrn(value):
-    if value == 1:
-        output(pin_grn, HIGH)
-    else:
-        output(pin_grn, LOW)
+        output(pin_led, LOW)
     return
 
 #----------------------------[init]
 def init():
     setmode(BOARD)
-    setup(pin_red, OUT)
-    setup(pin_grn, OUT)
+    setup(pin_led, OUT)
 
-    ledred(0)
-    ledgrn(0)
+    ledstatus(0)
     return
 
 #----------------------------[]

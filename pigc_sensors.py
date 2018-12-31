@@ -6,7 +6,7 @@ import log
 import gpio as GPIO
 import socket
 
-status_led = 32
+status_led = 16
 
 #----------------------------[senddata]
 def senddata(array):
