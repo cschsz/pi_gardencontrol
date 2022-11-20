@@ -6,6 +6,7 @@ Key features of this project are:
 * DS1820
 * 433 MHz
 * web access
+* SMA
 
 Programm logging is found in /var/log/pigc_data.log and /var/log/pigc_[YEAR-MM].log
 
@@ -13,6 +14,20 @@ Programm logging is found in /var/log/pigc_data.log and /var/log/pigc_[YEAR-MM].
 ```
 sudo apt-get update
 sudo apt-get install python3-rpi.gpio
+```
+
+#### 1-wire Interface
+```
+sudo raspi-config
+Interface Options
+1-Wire
+```
+
+#### Adafruit_Python_DHT
+```
+sudo apt-get install python-setuptools
+git clone https://github.com/adafruit/Adafruit_Python_DHT
+sudo python setup.py install
 ```
 
 ## Running
@@ -68,4 +83,5 @@ add in /etc/rc.local before the last line (exit 0):
 ```
 /usr/local/bin/pigc/pigc.py &
 /usr/local/bin/pigc/pigc_sensors.py &
+/usr/local/bin/pigc/pigc_sma.py &
 ```

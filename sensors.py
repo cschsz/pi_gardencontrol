@@ -6,15 +6,17 @@ import time
 import log
 
 array = [ "?", "?", "?", "?", "?", "?", "?"] # dht-temp, dht-humi, ds1820(1), ds1820(2), ds1820(3), boden, regen
+smaa = [ "?", "?"]
 sflag = False
 
 #----------------------------[read]
 def read():
-    return array
+    return array+smaa
 
 #----------------------------[sensordata]
 def sensordata(data):
     global array
+    global smaa
     log.info("sensor", "received: " + data)
     try:
         if data[:5] == "pigc;":
@@ -22,6 +24,11 @@ def sensordata(data):
             if len(xarr) == 8:
                 xarr.remove("pigc")
                 array = list(xarr)
+        if data[:4] == "sma;":
+            xarr = data.split(";")
+            if len(xarr) == 3:
+                xarr.remove("sma")
+                smaa = list(xarr)
     except Exception:
         pass
     return

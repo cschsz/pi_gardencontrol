@@ -282,6 +282,7 @@ def generatehtml(logflag):
         html += "<p>{:s}</p>".format(time.strftime("%d.%m.%Y %H:%M:%S",time.localtime()))
         html += "<hr>"
         html += "<div class='alert alert-secondary' role='alert'>Temperatur: {:s}&nbsp;&nbsp;&nbsp;{:s}&nbsp;&nbsp;&nbsp;{:s} &deg;C<br>System: {:s} &deg;C {:s} %</div>".format(values[2], values[3], values[4], values[0], values[1])
+        html += "<div class='alert alert-secondary' role='alert'>Solar: {:s} ({:s})<br><progress id='sma' value='{:s}' max='3250'> 32% </progress></div>".format(values[7], values[8], values[7])
         html += "<div class='alert alert-secondary' role='alert'>Regen/Bodenfeuchte: ?</div>"
         html += "<div class='alert alert-secondary' role='alert'>Bew&auml;sserung: ?</div>"
         html += "<div class='alert alert-secondary' role='alert'>Rasenm&auml;her: ?</div>"
@@ -432,14 +433,14 @@ def serverthread():
 
     # init server
     config = configparser.ConfigParser()
-    config.read('/usr/local/etc/PIgc.ini')
+    config.read('/usr/local/etc/pigc.ini')
     try:
         user  = config["WEBSERVER"]["USER"]
         pasw  = config["WEBSERVER"]["PASSWORD"]
     except KeyError:
         user  = ""
         pasw  = ""
-        log.info("websvr", "PIgc.ini not filled")
+        log.info("websvr", "pigc.ini not filled")
 
     # authentication
     phrase = user + ":" + pasw
